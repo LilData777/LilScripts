@@ -1,0 +1,152 @@
+#!/bin/bash
+SCRIPT_VERSION="v1.0"
+# Logging is enabled to make sure you can catch what happened.
+exec > >(tee -a ~/gitsetuplog.txt) 2>&1
+
+# Initial functions are defined here just to make things easier on me.
+# This function logs to a file and to the user if enabled. It will be saved outside of the git repository.
+function logg {
+    echo "$1" | tee ~/gitsetuplog.txt
+}
+
+# This function prompts the user for something. The variable will be set as
+function promptt {
+    sleep 2
+    clear
+    read -p "$1 " answer
+    logg "User inputted $answer"
+}
+
+# This function is just a convenient way of handling blank values in User Prompts
+function handle_blank {
+    if [[ -z "$answer" ]]; then
+        logg "[Info] Changing answer to default value: $1"
+        answer="$1"
+    fi
+}
+
+# These are other functions that just is seperated to make things more readable.
+function get_repo_info {
+    while :
+    do
+        promptt "Please enter the remote repo's url (Exclude the https part) (Ex: github.com/cooluser/coolrepo.git)"
+        if [[ -z $answer ]]; then
+            echo "Answer is blank."
+        else
+            REPO_URL=$answer
+            promptt "Please confirm (y/n): $REPO_URL"
+            if [[ $answer == "y" ]]; then
+                break
+            fi
+        fi
+    done
+    
+    while :
+    do
+        promptt "Please enter your username for repo URL"
+        if [[ -z $answer ]]; then
+            echo "Answer is blank."
+        else
+            username=$answer
+            break
+        fi
+    done
+    
+    while :
+    do
+        promptt "Please enter your password or token for user $USERNAME"
+        if [[ -z $answer ]]; then
+            echo "Answer is blank."
+        else
+            password=$answer
+            break
+        fi
+    done
+}
+
+# Before logging, check if the user wants to see the logs. By default, this is false just to make it look nice. You can enable it with the -l or --log arg.
+if [[ $1 == "-l" || $1 == "--log" ]]; then
+    LOGGING_ENABLED=true
+fi
+echo "Git Setup Script v1.0 on $OS"
+logg "[Info] Checking if git is installed."
+# Attempts to check if git is a command
+git_path=$(command -v "git")
+if [[ -n $git_path ]]; then
+    git --version
+else
+    echo "git is not installed. Please install it to run this script."
+    exit 127
+fi
+
+# This section checks configuration for git and makes sure it is ready to do stuff.
+logg "[Info] Checking git configuration"
+if [[ -z $(git config --global user.name) && -z $(git config --global user.email) ]]; then
+    echo "Your git config for your user.name or user.email is not set! Let's fix that."
+    logg "[Info] Prompting for name and email"
+    echo "These config values are essential to allow you to commit to your repository. The script needs these values to run."
+    read -p "First and Last Name" prompta
+    logg "[Info] Setting Name"
+    git config --global user.name "$prompta"
+    read -p "Email" promptb
+    logg "[Info] Setting Email"
+    git config --global user.email "$promptb"
+    logg "[Info] Confirming that a value was set"
+    if [[ -z $(git config --global user.name) && -z $(git config --global user.email) ]]; then
+        echo "Config set."
+    else
+        echo "You didn't set one or both of the values. The value is needed in order to actually do commits and push to your repository. The script will now exit. Rerun to do the process again."
+        logg "[Fatal] Configuration not set. Git config user.name and user.email not set"
+        exit 1
+    fi
+fi
+
+# If all stuff is good, start setup of the git repository
+logg "[Info] Starting Git Creation"
+
+# Check if the user wants a specific location
+promptt "Where should we create the Repository's folder? (Default: ./)"
+handle_blank "./"
+logg "[Info] Setting Variable FOLDER_LOCATION to $answer"
+FOLDER_LOCATION=$answer
+# Prompt for folder name
+promptt "What do you want the folder name to be? (Default: gitRepo)"
+handle_blank "gitRepo"
+logg "[Info] Creating Folder $answer and storing name in variable"
+FOLDER_NAME=$answer
+FOLDER_PATH=$FOLDER_LOCATION/$FOLDER_NAME
+mkdir $FOLDER_PATH
+logg "[Info] Going into git folder."
+cd $FOLDER_PATH
+logg "[Info] Initiating Git Repository"
+git init
+
+logg "[Info] Prompting for Git repository and login"
+promptt "This script will setup the remote origin connection to a repository with a url that contains your login to allow you to push and pull the repository without typing in your login every time (URL Ex: https://[username]:[password]@github.com/CoolOwnerOfRepo/CoolRepository.git). If you're using github, use an access token as your password. Would you like the automated login via url enabled? (respond with y/n) (default: n)"
+if [ $answer == "y" ]; then
+    echo "Enabled."
+    get_repo_info
+    logg "[Info] Making Origin url..."
+    REPO="https://$username:$password@$REPO_URL"
+    echo "Origin Url made: $REPO"
+else
+    echo "Disabled."
+    get_repo_info
+    logg "[Info] Making Origin url..."
+    REPO="https://$REPO_URL"
+    echo "Origin Url made: $REPO"
+fi
+logg "[Info] Setting up remote origin"
+git remote add origin "$REPO"
+logg "[Info] Prompting for branch"
+promptt "Branch name (default: main)"
+handle_blank "main"
+BRANCH=$answer
+git branch -M $BRANCH
+echo "We're going to pull from the repo. If the repo is empty, it will error. Ignore the errors if it pops up."
+logg "[Info] Executing initial pull from origin:$BRANCH"
+git pull origin $BRANCH
+logg "[Info] Execution finished."
+echo "Logs have been outputted at ~/gitsetuplog.txt for future reference."
+echo "Finished Setup. Enjoy!"
+exit 0

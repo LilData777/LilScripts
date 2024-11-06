@@ -1,0 +1,114 @@
+#!/bin/bash
+arg1="$1"
+arg2="$2"
+arg3="$3"
+VERSION="v1.0"
+DONE=false
+ROOT=false
+USER="undefined"
+RESPOND='undefined'
+
+echo "LilInstaller $VERSION"
+# This is the main function to check what arg was inputted
+function main {
+    # Checks if you're root
+    USER=$(whoami)
+    if [[ "$USER" == "root" ]]; then
+        ROOT=true
+    else
+        ROOT=false
+        echo "You're not running as root. This is fine since this script can run locally, but if you want to be able to install scripts to your /usr/bin directory, then you will need to run as root."
+    fi
+    # Check if the script is properly setup
+    if [[ ROOT == true ]]; then
+        if [[ -f /etc/lilsc/lilsi.conf ]]; then
+            # {P} All the config stuff will go into variables in the script
+            echo ""
+        else
+            if [[ -f ~/.lilsc/lilsi.conf ]]; then
+                # {P} All the config stuff will go into variables in the script
+                echo ""
+            else
+                echo "The installer isn't setup. If this isn't right, maybe you ran it without root or on a different user."
+                echo "Info:"
+                echo "User Executing: $USER"
+                echo "Didn't exist: ~/.lilsc/lilsi.conf & /etc/lilsc/lilsi.conf"
+                echo ""
+                yes_no "If you're actually new, would you like to setup the installer?"
+                if [[ $RESPONSE == true ]]; then
+                    setupp
+                else
+                    echo "Stopping installer"
+                    exit 0
+                fi
+                
+            fi
+        fi
+    else
+        if [[ -f ~/.lilsc/lilsi.conf ]]; then
+            # {P} All the config stuff will go into variables in the script
+            echo ""
+        else
+            echo "The installer isn't setup. if this isn't right, maybe you ran it with root, or on a different user."
+            echo "Info:"
+            echo "User Executing: $USER"
+            echo "Didn't exist: ~/.lilsc/lilsi.conf"
+            echo ""
+            yes_no "If you're actually new, would you like to setup the installer?"
+            if [[ $RESPONSE == true ]]; then
+                setupp
+            else
+                echo "Stopping installer"
+                exit 0
+            fi
+        fi
+    fi
+    # Check command arguments
+    case "$arg1" in 
+        update)
+            update
+            ;;
+        *)
+            echo "Usage: $0 [options]"
+            echo "options:"
+            echo "      install {package}: Installs a script from the github repository"
+            echo "      update: updates the script's code and list."
+            ;;
+    esac
+}
+
+# This function will setup the script.
+
+
+# These are extra functions for other functions in this script
+function loading {
+    echo -ne "$1"
+    while :
+    do
+        echo -ne "."
+        sleep 1
+        if [[ $DONE == true ]]; then
+            DONE=false
+            echo "/n"
+            break
+        fi
+    done
+}
+function yes_no {
+    read -p "$1 (y/n) " RESPOND
+    if [[ RESPOND == "yes" || RESPOND == "y" || RESPOND == "Yes" || RESPOND == "Y" ]]; then
+        RESPOND=true
+    elif [[ RESPOND == "no" || RESPOND == "n" || RESPOND == "No" || RESPOND == "N" ]]; then
+        RESPOND=false
+    fi
+}
+
+# These are all the functions for each command
+function update {
+    loading "Checking for updates" &
+    sleep 2
+    # Check for updates
+    DONE=true
+    echo "No new updates found!"
+}
+main

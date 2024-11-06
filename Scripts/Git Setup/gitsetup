@@ -12,11 +12,25 @@ function logg {
 # This function prompts the user for something. The variable will be set as
 function promptt {
     sleep 2
-    clear
     read -p "$1 " answer
     logg "User inputted $answer"
 }
 
+function require_prompt {
+    while :
+    do
+        promptt "$1"
+        if [[ -z "$answer" ]]; then
+            echo "Answer is blank."
+        else
+            REPO_URL="$answer"
+            promptt "Please confirm (y/n): $REPO_URL"
+            if [[ "$answer" == "y" ]]; then
+                break
+            fi
+        fi
+    done
+}
 # This function is just a convenient way of handling blank values in User Prompts
 function handle_blank {
     if [[ -z "$answer" ]]; then
@@ -30,12 +44,12 @@ function get_repo_info {
     while :
     do
         promptt "Please enter the remote repo's url (Exclude the https part) (Ex: github.com/cooluser/coolrepo.git)"
-        if [[ -z $answer ]]; then
+        if [[ -z "$answer" ]]; then
             echo "Answer is blank."
         else
-            REPO_URL=$answer
+            REPO_URL="$answer"
             promptt "Please confirm (y/n): $REPO_URL"
-            if [[ $answer == "y" ]]; then
+            if [[ "$answer" == "y" ]]; then
                 break
             fi
         fi
@@ -44,10 +58,10 @@ function get_repo_info {
     while :
     do
         promptt "Please enter your username for repo URL"
-        if [[ -z $answer ]]; then
+        if [[ -z "$answer" ]]; then
             echo "Answer is blank."
         else
-            username=$answer
+            username="$answer"
             break
         fi
     done
@@ -55,10 +69,10 @@ function get_repo_info {
     while :
     do
         promptt "Please enter your password or token for user $USERNAME"
-        if [[ -z $answer ]]; then
+        if [[ -z "$answer" ]]; then
             echo "Answer is blank."
         else
-            password=$answer
+            password="$answer"
             break
         fi
     done
@@ -72,7 +86,7 @@ echo "Git Setup Script v1.0 on $OS"
 logg "[Info] Checking if git is installed."
 # Attempts to check if git is a command
 git_path=$(command -v "git")
-if [[ -n $git_path ]]; then
+if [[ -n "$git_path" ]]; then
     git --version
 else
     echo "git is not installed. Please install it to run this script."
@@ -108,13 +122,13 @@ logg "[Info] Starting Git Creation"
 promptt "Where should we create the Repository's folder? (Default: ./)"
 handle_blank "./"
 logg "[Info] Setting Variable FOLDER_LOCATION to $answer"
-FOLDER_LOCATION=$answer
+FOLDER_LOCATION="$answer"
 # Prompt for folder name
 promptt "What do you want the folder name to be? (Default: gitRepo)"
 handle_blank "gitRepo"
-logg "[Info] Creating Folder $answer and storing name in variable"
-FOLDER_NAME=$answer
-FOLDER_PATH=$FOLDER_LOCATION/$FOLDER_NAME
+logg "[Info] Creating Folder "$answer" and storing name in variable"
+FOLDER_NAME="$answer"
+FOLDER_PATH="$FOLDER_LOCATION/$FOLDER_NAME"
 mkdir $FOLDER_PATH
 logg "[Info] Going into git folder."
 cd $FOLDER_PATH
@@ -123,7 +137,7 @@ git init
 
 logg "[Info] Prompting for Git repository and login"
 promptt "This script will setup the remote origin connection to a repository with a url that contains your login to allow you to push and pull the repository without typing in your login every time (URL Ex: https://[username]:[password]@github.com/CoolOwnerOfRepo/CoolRepository.git). If you're using github, use an access token as your password. Would you like the automated login via url enabled? (respond with y/n) (default: n)"
-if [ $answer == "y" ]; then
+if [ "$answer" == "y" ]; then
     echo "Enabled."
     get_repo_info
     logg "[Info] Making Origin url..."
@@ -141,7 +155,7 @@ git remote add origin "$REPO"
 logg "[Info] Prompting for branch"
 promptt "Branch name (default: main)"
 handle_blank "main"
-BRANCH=$answer
+BRANCH="$answer"
 git branch -M $BRANCH
 echo "We're going to pull from the repo. If the repo is empty, it will error. Ignore the errors if it pops up."
 logg "[Info] Executing initial pull from origin:$BRANCH"

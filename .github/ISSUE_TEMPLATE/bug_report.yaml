@@ -1,8 +1,9 @@
 name: Bug report
 description: Create a report to help us improve
-title: ''
-labels: ''
-assignees: ''
+title: 'Bug: [Short Description]'
+labels: ['bug']
+assignees: []
+
 body:
   - type: markdown
     attributes:

@@ -1,9 +1,10 @@
 #!/bin/bash
 
+ConfigLocation=""
 arg1="$1"
 arg2="$2"
 arg3="$3"
-VERSION="v1.0"
+VERSION="1.0"
 DONE=false
 ROOT=false
 USER="undefined"
@@ -22,25 +23,26 @@ function main {
         ROOT=true
     else
         ROOT=false
-        echo "You're not running as root. This is fine since this script can run locally, but if you want to be able to install scripts to your /usr/bin directory, then you will need to run as root."
+        echo "[Info] You're not running as root. Just keep that in mind =D"
     fi
-
+    # Checks if required dependencies are installed
+    check_dependencies
+    
     # Check if the script is properly setup
-    if [[ $ROOT == true ]]; then
-        check_config "/etc/lilsc/$CONFIG_FILE" || check_config "$HOME/$TEMP_DIR/$CONFIG_FILE"
-    else
-        check_config "$HOME/$TEMP_DIR/$CONFIG_FILE"
-    fi
+    check_config $ConfigLocation
 
     # Check command arguments
     case "$arg1" in 
+        install)
+            installl $arg2
+            ;;
         update)
             update
             ;;
         *)
             echo "Usage: $0 [options]"
             echo "options:"
-            echo "      install {package}: Installs a script from the GitHub repository"
+            echo "      install {script}: Installs a script from the LilScripts GitHub repository"
             echo "      update: Updates the script's code and list."
             ;;
     esac
@@ -50,20 +52,50 @@ function main {
 function check_config {
     local config_path="$1"
     if [[ -f "$config_path" ]]; then
-        echo "Using configuration file at $config_path"
+        echo "[Info] Using configuration file at $config_path"
+        source $config_path
     else
-        echo "The installer isn't setup. If this isn't right, maybe you ran it without root or on a different user."
+        echo "The installer's config wasn't found. If this isn't right, maybe you reinstalled the installer or the installer didn't properly add the config location to itself."
         echo "Info:"
-        echo "User Executing: $USER"
-        echo "Didn't exist: $config_path"
+        echo "Config Location Variable Set: $ConfigLocation"
         echo ""
         yes_no "If you're actually new, would you like to setup the installer?"
         if [[ $RESPOND == true ]]; then
             setupp
         else
-            echo "Stopping installer"
-            exit 0
+            yes_no "If this is an error, would you like to reconfigure the config location?"
+            if [[ $RESPOND == true ]]; then
+                promptt "Where is your config located? (Ex: /home/[user]/LilScripts/resources/lilsi.conf)"
+                if [[ -f $RESPOND ]]; then
+                    # Test the config for validation
+                    source $RESPOND
+                    if [[ -z $ScriptFiles && -z $InstallLocation ]]; then
+                        echo "Config Validated!"
+                        sed -i '/ ConfigLocation=/c\'"ConfigLocation=\"$ScriptFiles/lilsi.conf\"" "$0"
+                        echo "Script Config Location corrected. Installer should now work! Try it now!"
+                        exit 0
+                    else
+                        echo "Uhoh. The config isn't valid. We need a valid config to work. Check and confirm that the ScriptFiles and InstallLocation properties are set. Rerun the installer to redo the fixer."
+                        exit $1
+                    fi
+                else
+                    echo "The file doesn't exist. Rerun the script to redo the process."
+                    exit 1
+                fi
+            else
+                echo "Stopping installer"
+                exit 0
+            fi
         fi
+    fi
+}
+
+# Function to check if required dependencies are installed or if it was overrided
+function check_dependencies {
+    WGET_PATH="$(command -v wget)"
+    if [[ -z $WGET_PATH ]]; then
+        echo "[Info] Missing Dependency wget. Please install it using your prefered package manager."
+        exit 127
     fi
 }
 
@@ -74,17 +106,17 @@ function setupp {
     mkdir -p "$TEMP_DIR"
 
     echo "[Setup] Downloading Index"
-    wget -P "$TEMP_DIR" https://raw.githubusercontent.com/LilData777/LilScripts/refs/heads/main/Resources/lilscripts_index.list
+    wget "https://raw.githubusercontent.com/LilData777/LilScripts/refs/heads/main/Resources/lilscripts_index.list" -P "$TEMP_DIR"
 
     echo "[Setup] Creating Config"
     touch "$CONFIG_FILE"
-    echo "We're getting ready to prompt for config settings"
-
+    
     if [[ $ROOT == true ]]; then
         echo "# This is where the installer will install the scripts to" >> "$CONFIG_FILE"
         promptt "Where do you want to install scripts to? (default: /usr/local/bin)" "/usr/local/bin"
     else
         echo "# Note that setup of this config was done via a non-root user" >> "$CONFIG_FILE"
+        echo "# This is where the installer will install the scripts to" >> "$CONFIG_FILE"
         promptt "Where do you want to install scripts to? (default: $HOME/lilscripts)" "$HOME/lilscripts"
     fi
 
@@ -98,12 +130,19 @@ function setupp {
     ScriptFiles="$answer"
     [[ ! -d "$answer" ]] && mkdir -p "$answer"
 
-    echo "Finalizing and moving everything"
+    echo "[Setup] Finalizing and moving everything"
     mv "$CONFIG_FILE" "$ScriptFiles"
+    mv "$TEMP_DIR/lilscripts_index.list" "$ScriptFiles"
     
     # Correctly reference the script in the new directory
-    sed -i "2 a ConfigLocation=\"$ScriptFiles/lilsi.conf\"" "$0"
+    sed -i '/ ConfigLocation=/c\'"ConfigLocation=\"$ScriptFiles/lilsi.conf\"" "$0"
     mv "$0" "$InstallLocation/lilsi"
+    echo "Setup is complete. Config file was created at $ScriptFiles/lilsi.conf. The installer has moved to the location where all the scripts are ($InstallLocation) and is now called lilsi. The configuration location was appended to the script at line 3. If it is in /usr/local/bin, you can run the installer with lilsi. Hope that LilScripts become convenient to you. Please report issues at https://github.com/LilData777/LilScripts/issues"
+}
+
+function installl {
+    echo "[Install] Reading Index"
+    # Rest of install commands here
 }
 
 # Extra functions for other operations in this script
@@ -119,16 +158,40 @@ function yes_no {
 function promptt {
     read -p "$1 " answer
     if [[ -z "$answer" ]]; then
-        answer="$2"
+        if [[ -z "$2" ]]; then
+            promptt "Blank answer not accepted. Try again. "
+        else
+            answer="$2"
+        fi
     fi
 }
 
 # Function to update the script
 function update {
-    echo "Checking for updates"
+    echo "[Updater] Comparing script version"
+    mkdir "$ScriptFiles/$TEMP_DIR"
+    wget "https://raw.githubusercontent.com/LilData777/LilScripts/refs/heads/main/Resources/lilscripts_index.list" -P "$ScriptFiles/$TEMP_DIR"
+    grep 'lilsi - LilScript Installer' "$ScriptFiles/$TEMP_DIR/lilscripts_index.list" | sed -n 's/.*v\([0-9.]*\).*/\1/p'
+    if [[ $VERSION < ONLINE_INDEX ]]; then
+        echo "[Updater] Update available for Installer (Original: $VERSION > New: $ONLINE_INDEX)"
+        yes_no "Would you like to update?"
+        if [[ $RESPOND == true ]]; then
+            echo "[Updater] Updating Index"
+            cat "$ScriptFiles/$TEMP_DIR/lilscripts_index.list" > $ScriptFiles/lilscripts_index.list
+            echo "[Updater] Updating Installer"
+            wget "https://raw.githubusercontent.com/LilData777/LilScripts/refs/heads/main/Scripts/Installer%20Script/lilsi" -P "$ScriptFiles/$TEMP_DIR"
+            cat "$ScriptFiles/$TEMP_DIR/lilsi" > ./$0
+            # Stuff to update scripts will be here
+            echo "[Updater] Update complete."
+            exit 0
+        fi
+    else
+        echo "[Updater] Not updating."
+        exit 0
+    fi
     sleep 2
     # Check for updates
-    echo "No new updates found!"
+    echo "[Updater] No new updates found!"
 }
 
 main

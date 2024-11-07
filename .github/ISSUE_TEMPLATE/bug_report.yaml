@@ -1,64 +1,93 @@
-name: Bug Report
-description: File a bug report.
-title: "[Bug]: "
-labels: ["bug", "triage"]
-projects: ["octo-org/1", "octo-org/44"]
-assignees:
-  - octocat
+name: Bug report
+description: Create a report to help us improve
+title: ''
+labels: ''
+assignees: ''
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to fill out this bug report!
+        **Describe the bug**
+        A clear and concise description of what the bug is.
+  
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: Describe the bug
+      description: A clear and concise description of what the bug is.
+      placeholder: Describe the bug in detail
+
+  - type: markdown
+    attributes:
+      value: |
+        **To Reproduce**
+        Steps to reproduce the behavior:
+
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: To Reproduce
+      description: Steps to reproduce the behavior.
+      placeholder: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+        4. See error
+
+  - type: markdown
+    attributes:
+      value: |
+        **Expected behavior**
+        A clear and concise description of what you expected to happen.
+
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: Expected behavior
+      description: A clear and concise description of what you expected to happen.
+      placeholder: Describe the expected behavior
+
+  - type: markdown
+    attributes:
+      value: |
+        **Screenshots**
+        If applicable, add screenshots to help explain your problem.
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: If applicable, add screenshots to help explain your problem.
+      placeholder: Add screenshots here
+
+  - type: markdown
+    attributes:
+      value: |
+        **Script and Device's info (please complete the following information):**
+
   - type: input
-    id: contact
+    id: linux-distribution
     attributes:
-      label: Contact Details
-      description: How can we get in touch with you if we need more info?
-      placeholder: ex. email@example.com
-    validations:
-      required: false
+      label: Linux Distribution
+      description: e.g. Ubuntu (Version)
+      placeholder: Enter your Linux distribution and version
+
+  - type: input
+    id: script-version
+    attributes:
+      label: Script Version
+      description: Run `cat (script with issue) | grep VERSION`
+      placeholder: Enter the script version
+
+  - type: markdown
+    attributes:
+      value: |
+        **Additional context**
+        Add any other context about the problem here.
+
   - type: textarea
-    id: what-happened
+    id: additional-context
     attributes:
-      label: What happened?
-      description: Also tell us, what did you expect to happen?
-      placeholder: Tell us what you see!
-      value: "A bug happened!"
-    validations:
-      required: true
-  - type: dropdown
-    id: version
-    attributes:
-      label: Version
-      description: What version of our software are you running?
-      options:
-        - 1.0.2 (Default)
-        - 1.0.3 (Edge)
-      default: 0
-    validations:
-      required: true
-  - type: dropdown
-    id: browsers
-    attributes:
-      label: What browsers are you seeing the problem on?
-      multiple: true
-      options:
-        - Firefox
-        - Chrome
-        - Safari
-        - Microsoft Edge
-  - type: textarea
-    id: logs
-    attributes:
-      label: Relevant log output
-      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
-      render: shell
-  - type: checkboxes
-    id: terms
-    attributes:
-      label: Code of Conduct
-      description: By submitting this issue, you agree to follow our [Code of Conduct](https://example.com). 
-      options:
-        - label: I agree to follow this project's Code of Conduct
-          required: true
+      label: Additional context
+      description: Add any other context about the problem here.
+      placeholder: Add additional context

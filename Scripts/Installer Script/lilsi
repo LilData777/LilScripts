@@ -1,4 +1,5 @@
 #!/bin/bash
+
 arg1="$1"
 arg2="$2"
 arg3="$3"
@@ -6,10 +7,14 @@ VERSION="v1.0"
 DONE=false
 ROOT=false
 USER="undefined"
-RESPOND='undefined'
+RESPOND="undefined"
+answer="undefined"
+TEMP_DIR=".lilsitemp"
+CONFIG_FILE="$TEMP_DIR/lilsi.conf"
 
 echo "LilInstaller $VERSION"
-# This is the main function to check what arg was inputted
+
+# Main function to check what arg was inputted
 function main {
     # Checks if you're root
     USER=$(whoami)
@@ -19,50 +24,14 @@ function main {
         ROOT=false
         echo "You're not running as root. This is fine since this script can run locally, but if you want to be able to install scripts to your /usr/bin directory, then you will need to run as root."
     fi
+
     # Check if the script is properly setup
-    if [[ ROOT == true ]]; then
-        if [[ -f /etc/lilsc/lilsi.conf ]]; then
-            # {P} All the config stuff will go into variables in the script
-            echo ""
-        else
-            if [[ -f ~/.lilsc/lilsi.conf ]]; then
-                # {P} All the config stuff will go into variables in the script
-                echo ""
-            else
-                echo "The installer isn't setup. If this isn't right, maybe you ran it without root or on a different user."
-                echo "Info:"
-                echo "User Executing: $USER"
-                echo "Didn't exist: ~/.lilsc/lilsi.conf & /etc/lilsc/lilsi.conf"
-                echo ""
-                yes_no "If you're actually new, would you like to setup the installer?"
-                if [[ $RESPONSE == true ]]; then
-                    setupp
-                else
-                    echo "Stopping installer"
-                    exit 0
-                fi
-                
-            fi
-        fi
+    if [[ $ROOT == true ]]; then
+        check_config "/etc/lilsc/$CONFIG_FILE" || check_config "$HOME/$TEMP_DIR/$CONFIG_FILE"
     else
-        if [[ -f ~/.lilsc/lilsi.conf ]]; then
-            # {P} All the config stuff will go into variables in the script
-            echo ""
-        else
-            echo "The installer isn't setup. if this isn't right, maybe you ran it with root, or on a different user."
-            echo "Info:"
-            echo "User Executing: $USER"
-            echo "Didn't exist: ~/.lilsc/lilsi.conf"
-            echo ""
-            yes_no "If you're actually new, would you like to setup the installer?"
-            if [[ $RESPONSE == true ]]; then
-                setupp
-            else
-                echo "Stopping installer"
-                exit 0
-            fi
-        fi
+        check_config "$HOME/$TEMP_DIR/$CONFIG_FILE"
     fi
+
     # Check command arguments
     case "$arg1" in 
         update)
@@ -71,44 +40,95 @@ function main {
         *)
             echo "Usage: $0 [options]"
             echo "options:"
-            echo "      install {package}: Installs a script from the github repository"
-            echo "      update: updates the script's code and list."
+            echo "      install {package}: Installs a script from the GitHub repository"
+            echo "      update: Updates the script's code and list."
             ;;
     esac
 }
 
-# This function will setup the script.
-
-
-# These are extra functions for other functions in this script
-function loading {
-    echo -ne "$1"
-    while :
-    do
-        echo -ne "."
-        sleep 1
-        if [[ $DONE == true ]]; then
-            DONE=false
-            echo "/n"
-            break
+# Function to check for configuration file
+function check_config {
+    local config_path="$1"
+    if [[ -f "$config_path" ]]; then
+        echo "Using configuration file at $config_path"
+    else
+        echo "The installer isn't setup. If this isn't right, maybe you ran it without root or on a different user."
+        echo "Info:"
+        echo "User Executing: $USER"
+        echo "Didn't exist: $config_path"
+        echo ""
+        yes_no "If you're actually new, would you like to setup the installer?"
+        if [[ $RESPOND == true ]]; then
+            setupp
+        else
+            echo "Stopping installer"
+            exit 0
         fi
-    done
+    fi
 }
+
+# Function to setup the script
+function setupp {
+    echo "[Setup] Begin Setup of LilScript Installer"
+    echo "[Setup] Making temporary setup folder"
+    mkdir -p "$TEMP_DIR"
+
+    echo "[Setup] Downloading Index"
+    wget -P "$TEMP_DIR" https://raw.githubusercontent.com/LilData777/LilScripts/refs/heads/main/Resources/lilscripts_index.list
+
+    echo "[Setup] Creating Config"
+    touch "$CONFIG_FILE"
+    echo "We're getting ready to prompt for config settings"
+
+    if [[ $ROOT == true ]]; then
+        echo "# This is where the installer will install the scripts to" >> "$CONFIG_FILE"
+        promptt "Where do you want to install scripts to? (default: /usr/local/bin)" "/usr/local/bin"
+    else
+        echo "# Note that setup of this config was done via a non-root user" >> "$CONFIG_FILE"
+        promptt "Where do you want to install scripts to? (default: $HOME/lilscripts)" "$HOME/lilscripts"
+    fi
+
+    echo "InstallLocation=\"$answer\"" >> "$CONFIG_FILE"
+    InstallLocation="$answer"
+    [[ ! -d "$answer" ]] && mkdir -p "$answer"
+
+    promptt "Where do you want extra files from scripts to be? (Ex: Logs, config, etc) (default: $InstallLocation/resources)" "$InstallLocation/resources"
+    echo "# This is where scripts' files go to" >> "$CONFIG_FILE"
+    echo "ScriptFiles=\"$answer\"" >> "$CONFIG_FILE"
+    ScriptFiles="$answer"
+    [[ ! -d "$answer" ]] && mkdir -p "$answer"
+
+    echo "Finalizing and moving everything"
+    mv "$CONFIG_FILE" "$ScriptFiles"
+    
+    # Correctly reference the script in the new directory
+    sed -i "2 a ConfigLocation=\"$ScriptFiles/lilsi.conf\"" "$0"
+    mv "$0" "$InstallLocation/lilsi"
+}
+
+# Extra functions for other operations in this script
 function yes_no {
     read -p "$1 (y/n) " RESPOND
-    if [[ RESPOND == "yes" || RESPOND == "y" || RESPOND == "Yes" || RESPOND == "Y" ]]; then
+    if [[ $RESPOND =~ ^[Yy](es)?$ ]]; then
         RESPOND=true
-    elif [[ RESPOND == "no" || RESPOND == "n" || RESPOND == "No" || RESPOND == "N" ]]; then
+    else
         RESPOND=false
     fi
 }
 
-# These are all the functions for each command
+function promptt {
+    read -p "$1 " answer
+    if [[ -z "$answer" ]]; then
+        answer="$2"
+    fi
+}
+
+# Function to update the script
 function update {
-    loading "Checking for updates" &
+    echo "Checking for updates"
     sleep 2
     # Check for updates
-    DONE=true
     echo "No new updates found!"
 }
+
 main

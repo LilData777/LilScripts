@@ -63,9 +63,9 @@ function check_config {
             yes_no "If this is an error, would you like to reconfigure the config location?"
             if [[ $RESPOND == true ]]; then
                 promptt "Where is your config located? (Ex: /home/[user]/LilScripts/resources/lilsi.conf)"
-                if [[ -f $RESPOND ]]; then
+                if [[ -f $answer ]]; then
                     # Test the config for validation
-                    source $RESPOND
+                    source $answer
                     if [[ -n $ScriptFiles && -n $InstallLocation ]]; then
                         echo "Config Validated!"
                         sed -i '/ ConfigLocation=/c\'"ConfigLocation=\"$ScriptFiles/lilsi.conf\"" "$0"

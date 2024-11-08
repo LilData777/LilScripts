@@ -67,7 +67,7 @@ function check_config {
                     source $answer
                     if [[ -n $ScriptFiles && -n $InstallLocation ]]; then
                         echo "Config Validated!"
-                        sed -i "2c\ConfigLocation=\"$ScriptFiles/lilsi.conf\"" "$0"
+                        sed -i "2s\ConfigLocation=\"$ScriptFiles/lilsi.conf\"" "$0"
                         echo "Script Config Location corrected. Installer should now work! Try it now!"
                         exit 0
                     else
@@ -131,7 +131,7 @@ function setupp {
     mv "$TEMP_DIR/lilscripts_index.list" "$ScriptFiles"
     
     # Correctly reference the script in the new directory
-    sed -i "2c\ConfigLocation=\"$ScriptFiles/lilsi.conf\"" "$0"
+    sed -i "2s\ConfigLocation=\"$ScriptFiles/lilsi.conf\"" "$0"
     mv "$0" "$InstallLocation/lilsi"
 
     echo "[Setup] Removing Temp Directory"

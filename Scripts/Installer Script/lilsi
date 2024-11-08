@@ -103,7 +103,7 @@ function setupp {
     mkdir -p "$TEMP_DIR"
 
     echo "[Setup] Downloading Index"
-    wget "https://raw.githubusercontent.com/LilData777/LilScripts/refs/heads/main/Resources/lilscripts_index.list" -P "$TEMP_DIR"
+    wget -q "https://raw.githubusercontent.com/LilData777/LilScripts/refs/heads/main/Resources/lilscripts_index.list" -P "$TEMP_DIR"
 
     echo "[Setup] Creating Config"
     touch "$CONFIG_FILE"
@@ -132,8 +132,11 @@ function setupp {
     mv "$TEMP_DIR/lilscripts_index.list" "$ScriptFiles"
     
     # Correctly reference the script in the new directory
-    sed -i '/ ConfigLocation=/c\'"ConfigLocation=\"$ScriptFiles/lilsi.conf\"" "$0"
+    sed -i "2c\ConfigLocation=\"$ScriptFiles/lilsi.conf\"" "$0"
     mv "$0" "$InstallLocation/lilsi"
+
+    echo "[Setup] Removing Temp Directory"
+    rm -r $TEMP_DIR
     echo ""
     echo "Setup is complete. Config file was created at $ScriptFiles/lilsi.conf. The installer has moved to the location where all the scripts are ($InstallLocation) and is now called lilsi. The configuration location was appended to the script at line 3. If it is in /usr/local/bin, you can run the installer with lilsi. Hope that LilScripts become convenient to you. Please report issues at https://github.com/LilData777/LilScripts/issues"
 }

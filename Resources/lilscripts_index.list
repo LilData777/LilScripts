@@ -1,2 +1,4 @@
-gitsetup - Git Setup Script v1.0 - This script is a user-friendly interface designed to help you setup your git repository without the need to type all those commands to set it up.
-lilsi - LilScript Installer v0.1 - Installs and manages the LilScripts.
+1- Git Setup Script [v1.0] (gitsetup)
+    1> This script is a user-friendly interface designed to help you setup your git repository without the need to type all those commands to set it up.
+0- LilScript Installer [v0.1] (lilsi)
+    0> Installs and manages the LilScripts.

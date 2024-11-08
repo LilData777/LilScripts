@@ -142,7 +142,7 @@ function setupp {
 
 function installl {
     echo "[Install] Reading Index"
-    # Rest of install commands here
+    
 }
 
 # Extra functions for other operations in this script
@@ -168,6 +168,10 @@ function promptt {
 
 # Function to update the script
 function update {
+    if [[ -n $arg3 ]]; then
+        echo "The update function is not setup to update scripts yet. It only updates the installer."
+        exit 1
+    fi
     echo "[Updater] Updating Index"
     wget -q "https://raw.githubusercontent.com/LilData777/LilScripts/refs/heads/main/Resources/lilscripts_index.list" -P "$ScriptFiles"
     ONLINE_INDEX=$(grep 'lilsi - LilScript Installer' "$ScriptFiles/lilscripts_index.list" | sed -n 's/.*v\([0-9.]*\).*/\1/p')

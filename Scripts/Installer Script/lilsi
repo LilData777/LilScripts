@@ -68,7 +68,7 @@ function check_config {
                     source $answer
                     if [[ -n $ScriptFiles && -n $InstallLocation ]]; then
                         echo "Config Validated!"
-                        sed -i '/ ConfigLocation=/c\'"ConfigLocation=\"$ScriptFiles/lilsi.conf\"" "$0"
+                        sed -i "2c\ConfigLocation=\"$ScriptFiles/lilsi.conf\"" "$0"
                         echo "Script Config Location corrected. Installer should now work! Try it now!"
                         exit 0
                     else

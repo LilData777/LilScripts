@@ -1,0 +1,10 @@
+#!/bin/bash
+echo "Moving this script outta the way"
+mv $0 ..
+echo "Deleting all files in directory"
+rm -r *
+echo "Moving this script back"
+mv ../$0 .
+echo "Copying lilsi to directory"
+cp -r ../Scripts/Installer\ Script/lilsi .
+echo "Done"

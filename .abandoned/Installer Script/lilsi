@@ -1,9 +1,9 @@
 #!/bin/bash
-ConfigLocation="./lilscripts/resources/lilsi.conf"
+
 arg1="$1"
 arg2="$2"
 arg3="$3"
-VERSION="0.0.1"
+VERSION="0.2"
 DONE=false
 ROOT=false
 USER="undefined"
@@ -136,14 +136,66 @@ function setupp {
 
     echo "[Setup] Removing Temp Directory"
     rm -r $TEMP_DIR
+    echo "[Setup] Creating Currently Installed List"
+    touch "$ScriptFiles/lilsi_installed.list"
+    echo "lilsi=true" > "$ScriptFiles/lilsi_installed.list"
     echo ""
     echo "Setup is complete. Config file was created at $ScriptFiles/lilsi.conf. The installer has moved to the location where all the scripts are ($InstallLocation) and is now called lilsi. The configuration location was appended to the script at line 2. If it is in /usr/local/bin, you can run the installer with lilsi. Hope that LilScripts become convenient to you. Please report issues at https://github.com/LilData777/LilScripts/issues"
 }
 
 function installl {
     echo "[Install] Reading Index"
-    
+    # Sourcing the index list
+    source "$ScriptFiles/lilscripts_index.list"
+    source "$ScriptFiles/lilsi_installed.list"
+    INDEX_LIST="$(cat $ScriptFiles/lilscripts_index.list)"
+
+    if [[ "$INDEX_LIST" =~ "$arg2" ]]; then
+        echo "[Install] Found Package: $arg2"
+        if [[ ${!arg2} == true ]]; then
+            echo "[Install] This package is already installed."
+            exit 1
+        fi
+        echo "[Install] Grabbing Info"
+        echo ""
+        TEMP_VARIABLE="${arg2}_NAME"
+        PACKAGE_NAME=${!TEMP_VARIABLE}
+        TEMP_VARIABLE="${arg2}_VERSION"
+        PACKAGE_VERSION=${!TEMP_VARIABLE}
+        TEMP_VARIABLE="${arg2}_IDENTIFIER"
+        PACKAGE_IDENTIFIER=${!TEMP_VARIABLE}
+        TEMP_VARIABLE="${arg2}_DOWNLOAD_URL"
+        PACKAGE_DOWNLOAD_URL=${!TEMP_VARIABLE}
+        TEMP_VARIABLE="${arg2}_DESCRIPTION"
+        PACKAGE_DESCRIPTION=${!TEMP_VARIABLE}
+
+        echo "Name: $PACKAGE_NAME"
+        echo "Version: $PACKAGE_VERSION"
+        echo "URL: $PACKAGE_DOWNLOAD_URL"
+        echo "Description: $PACKAGE_DESCRIPTION"
+        echo ""
+        yes_no "Would you like to download this script? (yes/no)"
+        if [[ "$RESPOND" == true ]]; then
+            # Download it
+            echo "[Install] Downloading Script"
+            wget -q "$PACKAGE_DOWNLOAD_URL" -P "$InstallLocation"
+            echo "[Install] Adding script to installed list"
+            echo "$arg2=true" >> "$ScriptFiles/lilsi_installed.list"
+            echo "[Install] Install complete: $PACKAGE_NAME"
+            if [[ $PATH =~ "$InstallLocation" ]]; then
+                echo "[Warn] Script isn't accessible globally. It is recommended you add $InstallLocation to your Path Variable"
+            fi
+            exit 0
+        else
+            echo "[Install] Aborted"
+            exit 0
+        fi
+    else
+        echo "[Install] Package not found: $arg2"
+        exit 1
+    fi
 }
+
 
 # Extra functions for other operations in this script
 function yes_no {
@@ -173,8 +225,10 @@ function update {
         exit 1
     fi
     echo "[Updater] Updating Index"
+    echo "[Updater] Removing old Index"
+    rm "$ScriptFiles/lilscript_index.list"
     wget -q "https://raw.githubusercontent.com/LilData777/LilScripts/refs/heads/main/Resources/lilscripts_index.list" -P "$ScriptFiles"
-    ONLINE_INDEX=$(grep 'lilsi - LilScript Installer' "$ScriptFiles/lilscripts_index.list" | sed -n 's/.*v\([0-9.]*\).*/\1/p')
+    ONLINE_INDEX=$(grep '(lilsi)' "$ScriptFiles/lilscripts_index.list" | sed -n 's/.* \[v\([^]]*\)\] .*/\1/p')
     if [[ $VERSION < $ONLINE_INDEX ]]; then
         echo "[Updater] Update available for Installer (Original: $VERSION > New: $ONLINE_INDEX)"
         yes_no "Would you like to update?"

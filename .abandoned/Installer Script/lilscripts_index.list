@@ -1,0 +1,13 @@
+gitsetup_NAME="Git Setup Script"
+gitsetup_VERSION="1.0"
+gitsetup_IDENTIFIER="2"
+gitsetup_DOWNLOAD_URL="https://raw.githubusercontent.com/LilData777/LilScripts/refs/heads/main/Scripts/Git%20Setup/gitsetup"
+gitsetup_DESCRIPTION="This script is a user-friendly interface designed to help you setup your git repository without the need to type all those commands to set it up."
+
+lilsi_NAME="LilScript Installer"
+lilsi_VERSION="0.2"
+lilsi_IDENTIFIER="1"
+lilsi_DOWNLOAD_LINK="https://raw.githubusercontent.com/LilData777/LilScripts/refs/heads/main/Scripts/Installer%20Script/lilsi"
+lilsi_DESCRIPTION="Installs and manages the LilScripts."
+
+PACKAGES_AVAILABLE="$lilsi_IDENTIFIER $gitsetup_IDENTIFIER"

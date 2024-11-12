@@ -1,10 +1,5 @@
 #!/bin/bash
-arg1="$1"
-arg2="$2"
-arg3="$3"
 SCRIPT_VERSION="v1.0"
-LOGGING_ENABLED=false
-
 # Logging is enabled to make sure you can catch what happened.
 exec > >(tee -a ~/gitsetuplog.txt) 2>&1
 
@@ -85,7 +80,7 @@ function get_repo_info {
 
 function pre_check {
     # Before logging, check if the user wants to see the logs. By default, this is false just to make it look nice. You can enable it with the -l or --log arg.
-    if [[ $arg1 == "-l" || $arg1 == "--log" ]]; then
+    if [[ $1 == "-l" || $1 == "--log" ]]; then
         LOGGING_ENABLED=true
     fi
     echo "Git Setup Script v1.0 on $OS"
@@ -113,19 +108,16 @@ function pre_check {
         git config --global user.email "$promptb"
         logg "[Info] Confirming that a value was set"
         if [[ -z $(git config --global user.name) && -z $(git config --global user.email) ]]; then
-            echo "[Info] Config set."
+            echo "Config set."
         else
-            echo "[Fatal] You didn't set one or both of the values. The value is needed in order to actually do commits and push to your repository. The script will now exit. Rerun to do the process again."
+            echo "You didn't set one or both of the values. The value is needed in order to actually do commits and push to your repository. The script will now exit. Rerun to do the process again."
             logg "[Fatal] Configuration not set. Git config user.name and user.email not set"
             exit 1
         fi
     fi
-    setup_remote_repo
-
+    setupp
 }
-function setup_remote_repo {
-    logg "Description of setup:"
-    logg "Setup a git repository that has a remote connection to a remote git repository. This setup assumes the remote repo isn't setup yet "
+function setupp {
     # If all stuff is good, start setup of the git repository
     logg "[Info] Starting Git Creation"
 
